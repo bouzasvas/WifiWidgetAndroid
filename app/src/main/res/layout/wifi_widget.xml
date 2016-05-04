@@ -2,16 +2,31 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/widgetLayout"
-    android:padding="@dimen/widget_margin">
+    android:padding="@dimen/widget_margin"
+    android:gravity="center">
 
     <ImageButton
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/wifi_widget"
-        android:src="@drawable/wifi_widget"
-        android:layout_weight="0.17"
+        android:src="@drawable/wifi_button"
+        android:layout_weight="1"
         android:adjustViewBounds="true"
         android:scaleType="centerInside"
+        android:layout_gravity="right|center_vertical" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/connectedNetwork"
+        android:layout_weight="3"
+        android:textColor="@color/abc_primary_text_material_dark"
+        android:layout_gravity="left|center_vertical" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/signalStrength"
         android:layout_gravity="center" />
 
 </FrameLayout>
