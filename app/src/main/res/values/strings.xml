@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Wifi ON/OFF</string>
     <string name="button_action">Tap on Wifi to turn on/off your Wi-Fi</string>
-    <string name="network">Connected to:</string>
+    <string name="network">...</string>
 </resources>

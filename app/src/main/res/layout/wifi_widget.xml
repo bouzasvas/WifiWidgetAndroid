@@ -1,32 +1,43 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/widgetLayout"
-    android:padding="@dimen/widget_margin"
-    android:gravity="center">
+    android:background="@android:color/transparent">
+
+    <TextView
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/connectedNetwork"
+        android:textColor="@color/abc_primary_text_material_dark"
+        android:layout_gravity="center_vertical"
+        android:text="@string/network"
+        android:textSize="20sp"
+        android:gravity="fill"
+        android:textAlignment="center"
+        android:layout_alignParentTop="true"
+        android:layout_toStartOf="@+id/wifi_widget"
+        android:layout_alignBottom="@+id/wifi_widget" />
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/signalStrength"
+        android:layout_gravity="center"
+        android:src="@drawable/no_signal"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignBottom="@+id/connectedNetwork"
+        android:layout_toStartOf="@+id/connectedNetwork" />
 
     <ImageButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/wifi_widget"
         android:src="@drawable/wifi_button"
-        android:layout_weight="1"
         android:adjustViewBounds="true"
         android:scaleType="centerInside"
-        android:layout_gravity="right|center_vertical" />
+        android:layout_gravity="right|center_vertical"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/connectedNetwork"
-        android:layout_weight="3"
-        android:textColor="@color/abc_primary_text_material_dark"
-        android:layout_gravity="left|center_vertical" />
-
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/signalStrength"
-        android:layout_gravity="center" />
-
-</FrameLayout>
+</RelativeLayout>

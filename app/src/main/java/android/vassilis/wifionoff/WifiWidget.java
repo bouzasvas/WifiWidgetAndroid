@@ -20,8 +20,8 @@ import static android.appwidget.AppWidgetManager.getInstance;
  */
 public class WifiWidget extends AppWidgetProvider {
 
-    private static WifiManager WIFI_MANAGER = null;
-    private static WifiInfo WIFI_INFO = null;
+    private static WifiManager WIFI_MANAGER;
+    private static WifiInfo WIFI_INFO;
 
     public static String CHANGE_WIFI_STATE = "en_wifi";
 
@@ -50,7 +50,6 @@ public class WifiWidget extends AppWidgetProvider {
         for (int appWidgetId : appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId);
         }
-        updateWidget(context, WIFI_INFO.getSSID());
     }
 
     @Override
@@ -63,27 +62,55 @@ public class WifiWidget extends AppWidgetProvider {
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
+
+        boolean wifiState = false;
+
         if (intent.getAction().equals(CHANGE_WIFI_STATE)) {
-            boolean wifiState = WIFI_MANAGER.isWifiEnabled();
+
+            try {
+                wifiState = WIFI_MANAGER.isWifiEnabled();
+            }
+            catch (NullPointerException ex) {
+                System.exit(-1);
+            }
 
             WIFI_MANAGER.setWifiEnabled(!wifiState);
 
             if (!wifiState) {
                 Toast.makeText(context, "Wifi turned on!", Toast.LENGTH_LONG).show();
-                updateWidget(context, WIFI_INFO.getSSID());
+                int wifiSignal = WIFI_MANAGER.calculateSignalLevel(WIFI_INFO.getRssi(), 4);
+                updateWidget(context, WIFI_INFO.getSSID(), wifiSignal);
             }
             else {
                 Toast.makeText(context, "Wifi turned off!", Toast.LENGTH_LONG).show();
-                updateWidget(context, "NO Wi-Fi");
+                updateWidget(context, "Disconnected", -100);
             }
         }
     }
 
-    public void updateWidget(Context context, String ssid) {
+    public void updateWidget(Context context, String ssid, int signal) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.wifi_widget);
-        views.setTextViewText(R.id.connectedNetwork, "Connected to: "+ssid);
+
+        views.setTextViewText(R.id.connectedNetwork, ssid);
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         ComponentName projectWidget = new ComponentName(context, WifiWidget.class);
+
+        if (signal == -100) {
+            views.setImageViewResource(R.id.signalStrength, R.drawable.no_signal);
+        }
+        else if (signal < -70) {
+            views.setImageViewResource(R.id.signalStrength, R.drawable.low_signal);
+        }
+        else if (signal < -60 && signal >= -70) {
+            views.setImageViewResource(R.id.signalStrength, R.drawable.signal_1);
+        }
+        else if (signal < -50 && signal >= -60) {
+            views.setImageViewResource(R.id.signalStrength, R.drawable.signal_2);
+        }
+        else if (signal > -50) {
+            views.setImageViewResource(R.id.signalStrength, R.drawable.full_signal);
+        }
+
         appWidgetManager.updateAppWidget(projectWidget, views);
     }
 
