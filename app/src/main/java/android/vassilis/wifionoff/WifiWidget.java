@@ -7,6 +7,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.media.Image;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.widget.ImageButton;
@@ -20,9 +22,6 @@ import static android.appwidget.AppWidgetManager.getInstance;
  */
 public class WifiWidget extends AppWidgetProvider {
 
-    private static WifiManager WIFI_MANAGER;
-    private static WifiInfo WIFI_INFO;
-
     public static String CHANGE_WIFI_STATE = "en_wifi";
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
@@ -34,9 +33,6 @@ public class WifiWidget extends AppWidgetProvider {
         //ACTION
         Intent intent = new Intent(context, WifiWidget.class);
         intent.setAction(CHANGE_WIFI_STATE);
-
-        WIFI_MANAGER = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        WIFI_INFO = WIFI_MANAGER.getConnectionInfo();
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
         views.setOnClickPendingIntent(R.id.wifi_widget, pendingIntent);
@@ -63,29 +59,49 @@ public class WifiWidget extends AppWidgetProvider {
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
 
-        boolean wifiState = false;
+        WifiManager manager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 
         if (intent.getAction().equals(CHANGE_WIFI_STATE)) {
+            boolean wifiState = manager.isWifiEnabled();
 
-            try {
-                wifiState = WIFI_MANAGER.isWifiEnabled();
-            }
-            catch (NullPointerException ex) {
-                System.exit(-1);
-            }
+            manager.setWifiEnabled(!wifiState);
 
-            WIFI_MANAGER.setWifiEnabled(!wifiState);
+
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+            ComponentName thisAppWidget = new ComponentName(context.getPackageName(), WifiWidget.class.getName());
+            int[] appWidgetIds = appWidgetManager.getAppWidgetIds(thisAppWidget);
+
 
             if (!wifiState) {
                 Toast.makeText(context, "Wifi turned on!", Toast.LENGTH_LONG).show();
-                int wifiSignal = WIFI_MANAGER.calculateSignalLevel(WIFI_INFO.getRssi(), 4);
-                updateWidget(context, WIFI_INFO.getSSID(), wifiSignal);
+                while (!isConnected(context)) {
+                    //Wait to connect
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                WifiInfo connection = manager.getConnectionInfo();
+                int signal = manager.calculateSignalLevel(connection.getRssi(), 4);
+                updateWidget(context, connection.getSSID(), signal);
             }
             else {
                 Toast.makeText(context, "Wifi turned off!", Toast.LENGTH_LONG).show();
                 updateWidget(context, "Disconnected", -100);
             }
         }
+    }
+
+    public static boolean isConnected(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = null;
+        if (connectivityManager != null) {
+            networkInfo = connectivityManager.getActiveNetworkInfo();
+        }
+
+        return networkInfo != null && networkInfo.getState() == NetworkInfo.State.CONNECTED;
     }
 
     public void updateWidget(Context context, String ssid, int signal) {
@@ -98,16 +114,16 @@ public class WifiWidget extends AppWidgetProvider {
         if (signal == -100) {
             views.setImageViewResource(R.id.signalStrength, R.drawable.no_signal);
         }
-        else if (signal < -70) {
+        else if (signal == 0) {
             views.setImageViewResource(R.id.signalStrength, R.drawable.low_signal);
         }
-        else if (signal < -60 && signal >= -70) {
+        else if (signal == 1) {
             views.setImageViewResource(R.id.signalStrength, R.drawable.signal_1);
         }
-        else if (signal < -50 && signal >= -60) {
+        else if (signal == 2) {
             views.setImageViewResource(R.id.signalStrength, R.drawable.signal_2);
         }
-        else if (signal > -50) {
+        else if (signal == 3) {
             views.setImageViewResource(R.id.signalStrength, R.drawable.full_signal);
         }
 
