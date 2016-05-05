@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Wifi ON/OFF</string>
-    <string name="button_action">Tap on Wifi to turn on/off your Wi-Fi</string>
+    <string name="wifi_label">Tap to enable Wi-Fi</string>
+    <string name="data_label">Tap to enable Data</string>
     <string name="network">...</string>
 </resources>

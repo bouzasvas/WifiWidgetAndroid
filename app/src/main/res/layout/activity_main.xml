@@ -9,23 +9,59 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="android.vassilis.wifionoff.MainActivity"
     android:background="@color/accent_material_dark"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:gravity="center"
-    android:weightSum="1">
+    android:weightSum="2">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/button_action"
-        android:id="@+id/wifi_label"
-        android:textColor="@color/material_blue_grey_950" />
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:layout_gravity="center">
 
-    <ImageButton
-        android:layout_width="223dp"
-        android:layout_height="wrap_content"
-        android:id="@+id/wifi_button"
-        android:src="@drawable/wifi_button"
-        android:layout_weight="0.17"
-        android:background="@color/accent_material_dark"
-        android:onClick="changeWifiState" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wifi_label"
+            android:id="@+id/wifi_label"
+            android:textColor="@color/material_blue_grey_950"
+            android:textAlignment="center" />
+
+        <ImageButton
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/wifi_button"
+            android:src="@drawable/wifi_button"
+            android:background="@color/accent_material_dark"
+            android:onClick="changeWifiState" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:weightSum="1">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/data_label"
+            android:id="@+id/data_label"
+            android:textColor="@color/material_blue_grey_950" />
+
+        <ImageButton
+            android:layout_width="match_parent"
+            android:layout_height="128dp"
+            android:id="@+id/data_button"
+            android:src="@drawable/data_button"
+            android:background="@android:color/transparent"
+            android:onClick="changeDataState"
+            android:nestedScrollingEnabled="true" />
+    </LinearLayout>
+
 </LinearLayout>

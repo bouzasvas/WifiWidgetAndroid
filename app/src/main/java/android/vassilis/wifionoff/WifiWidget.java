@@ -11,9 +11,14 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.RemoteViews;
 import android.widget.Toast;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import static android.appwidget.AppWidgetManager.getInstance;
 
@@ -23,6 +28,7 @@ import static android.appwidget.AppWidgetManager.getInstance;
 public class WifiWidget extends AppWidgetProvider {
 
     public static String CHANGE_WIFI_STATE = "en_wifi";
+    public static String CHANGE_DATA_STATE = "en_data";
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
                                 int appWidgetId) {
@@ -31,11 +37,9 @@ public class WifiWidget extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.wifi_widget);
 
         //ACTION
-        Intent intent = new Intent(context, WifiWidget.class);
-        intent.setAction(CHANGE_WIFI_STATE);
+        views.setOnClickPendingIntent(R.id.wifi_widget, actionToPerform(context, 1));
+        views.setOnClickPendingIntent(R.id.data_widget, actionToPerform(context, 2));
 
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
-        views.setOnClickPendingIntent(R.id.wifi_widget, pendingIntent);
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
     }
@@ -88,9 +92,27 @@ public class WifiWidget extends AppWidgetProvider {
             }
             else {
                 Toast.makeText(context, "Wifi turned off!", Toast.LENGTH_LONG).show();
-                updateWidget(context, "Disconnected", -100);
+                updateWidget(context, "Disconnected", -1);
             }
         }
+        else if (intent.getAction().equals(CHANGE_DATA_STATE)) {
+            changeDataState(context);
+        }
+    }
+
+    //Set which action will perform on Widget Button Click
+    public static PendingIntent actionToPerform(Context context, int button) {
+        Intent intent = new Intent(context, WifiWidget.class);
+        PendingIntent pendingIntent = null;
+
+        if (button == 1) {
+            intent.setAction(CHANGE_WIFI_STATE);
+        }
+        else if (button == 2) {
+            intent.setAction(CHANGE_DATA_STATE);
+        }
+        pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+        return pendingIntent;
     }
 
     public static boolean isConnected(Context context) {
@@ -111,23 +133,115 @@ public class WifiWidget extends AppWidgetProvider {
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         ComponentName projectWidget = new ComponentName(context, WifiWidget.class);
 
-        if (signal == -100) {
-            views.setImageViewResource(R.id.signalStrength, R.drawable.no_signal);
+        //for wifi updates
+        if (signal != -2) {
+            if (signal == -1) {
+                views.setImageViewResource(R.id.signalStrength, R.drawable.no_signal);
+            } else if (signal == 0) {
+                views.setImageViewResource(R.id.signalStrength, R.drawable.low_signal);
+            } else if (signal == 1) {
+                views.setImageViewResource(R.id.signalStrength, R.drawable.signal_1);
+            } else if (signal == 2) {
+                views.setImageViewResource(R.id.signalStrength, R.drawable.signal_2);
+            } else if (signal == 3) {
+                views.setImageViewResource(R.id.signalStrength, R.drawable.full_signal);
+            }
         }
-        else if (signal == 0) {
-            views.setImageViewResource(R.id.signalStrength, R.drawable.low_signal);
-        }
-        else if (signal == 1) {
-            views.setImageViewResource(R.id.signalStrength, R.drawable.signal_1);
-        }
-        else if (signal == 2) {
-            views.setImageViewResource(R.id.signalStrength, R.drawable.signal_2);
-        }
-        else if (signal == 3) {
-            views.setImageViewResource(R.id.signalStrength, R.drawable.full_signal);
+        //for Data updates
+        else {
+            views.setImageViewResource(R.id.signalStrength, R.drawable.sim_card);
         }
 
+
         appWidgetManager.updateAppWidget(projectWidget, views);
+    }
+
+    public void changeDataState(Context context) {
+        ConnectivityManager conman = (ConnectivityManager)  context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        Class conmanClass = null;
+        try {
+            conmanClass = Class.forName(conman.getClass().getName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        Field connectivityManagerField = null;
+        try {
+            connectivityManagerField = conmanClass.getDeclaredField("mService");
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        connectivityManagerField.setAccessible(true);
+        Object connectivityManager = null;
+        try {
+            connectivityManager = connectivityManagerField.get(conman);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        Class connectivityManagerClass = null;
+        try {
+            connectivityManagerClass = Class.forName(connectivityManager.getClass().getName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        //Check if Data Connection is on or off
+        boolean dataEnabled = getDataConnectionStatus(context);
+
+
+        //Enable or disable Data Connection
+        Method setMobileDataEnabledMethod = null;
+        try {
+            setMobileDataEnabledMethod = connectivityManagerClass.getDeclaredMethod("setMobileDataEnabled", Boolean.TYPE);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        setMobileDataEnabledMethod.setAccessible(true);
+
+        try {
+            setMobileDataEnabledMethod.invoke(connectivityManager, !dataEnabled);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        updateDataWidget(context, dataEnabled);
+    }
+
+    public void updateDataWidget(Context context, boolean dataEnabled) {
+        if (dataEnabled) {
+            updateWidget(context, "Disconnected", -1);
+            Toast.makeText(context, "Data Connection turned off!", Toast.LENGTH_LONG).show();
+        }
+        else {
+            updateWidget(context, "Data Connection", -2);
+            Toast.makeText(context, "Data Connection turned on!", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public boolean getDataConnectionStatus(Context context) {
+        boolean dataStatus = false;
+
+        ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        Class connectivityClass = null;
+        try {
+            connectivityClass = Class.forName(manager.getClass().getName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        Method getStatus = null;
+        try {
+            getStatus = connectivityClass.getDeclaredMethod("getMobileDataEnabled");
+            getStatus.setAccessible(true);
+            dataStatus = (Boolean) getStatus.invoke(manager);
+        }
+        catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return dataStatus;
     }
 
     @Override
